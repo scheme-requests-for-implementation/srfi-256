@@ -1,3 +1,6 @@
+;;; SPDX-FileCopyrightText: 2024 Daphne Preston-Kendal
+;;; SPDX-License-Identifier: MIT
+
 (library (srfi :256)
   (export define-record-type)
   (import (rename (rnrs)

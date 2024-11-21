@@ -1,3 +1,6 @@
+;;; SPDX-FileCopyrightText: 2024 Daphne Preston-Kendal
+;;; SPDX-License-Identifier: MIT
+
 (define-library (srfi 256)
   (import (rename (scheme base)
                   (define-record-type r7rs:define-record-type)))
