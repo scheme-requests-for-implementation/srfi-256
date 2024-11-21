@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+SPDX-FileCopyrightText: 2024 Daphne Preston-Kendal
+SPDX-License-Identifier: MIT
+-->
+  <head>
+    <meta charset="utf-8">
+    <title>SRFI ###: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</title>
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
+<style>
+var {
+    font-family: serif;
+    white-space: nowrap;
+}
+var.stx {
+    font-style: normal;
+    font-family: serif;
+
+    &::before { content: '⟨'; }
+    &::after { content: '⟩'; }
+}
+</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body>
+    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>###: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</h1>
+
+<p>by Daphne Preston-Kendal</p>
+
+<h2 id="status">Status</h2>
+
+<p style="color: red;">For editor's use only.  Please do not edit this section.</p>
+
+<p>??? the draft/final/withdrawn status of the SRFI, information on how
+to subscribe to its mailing list, and important dates in its history.
+The editor will add this section.</p>
+
+<h2 id="abstract">Abstract</h2>
+
+<p>A SRFI 9-style <code>define-record-type</code> is specified which allows subtyping while preserving encapsulation, in that the field structure of supertypes remains an implementation detail with which subtypes need not concern themselves.
+
+<h2 id="issues">Issue</h2>
+
+<ul>
+<li><a href="https://srfi-email.schemers.org/srfi-240/msg/25690998/">As a matter of principle I think SRFI 9-compatible record definitions should be sealed</a> (and opaque) because SRFI 9 and R7RS small lack any kind of inheritance or procedural/inspection layers, so the author of a SRFI 9 record type definition does not necessarily expect that anyone will create a subtype of their type (although this SRFI resolves the most pressing issue if anyone ever did do that). Should one have to opt-in to defining a subtypeable record type with this syntax?</li>
+</ul>
+
+<h2 id="rationale">Rationale</h2>
+
+
+<p>SRFI 99’s syntactic layer specifies a popular extension to SRFI 9 record type definitions for single inheritance. However, the syntax used by SRFI 99 (and subsequently reduced to subsets by SRFIs 131, 136, and 150) requires record types which intend to be subtyped by the syntactic layer to make their internal field structure public. As a general matter of good programming style, implementation details should not be required to be part of a public interface. The alternative syntactic layer presented here hides the field structure of types from their subtypes: only some kind of constructor procedure needs to be exposed publically.</p>
+  <p>Moreover, an apparent conflict between SRFI 99 and the language used in the later R7RS small specification has led to an entirely bogus ‘debate’ over whether field names (field tags) in SRFI 9-style <code>define-record-type</code> should be considered symbols or identifiers. (See section 14.1 of <a href="https://dl.acm.org/doi/10.1145/3386330">Clinger and Wand 2020</a>.) This ‘argument’ has only become necessary because of a bad design choice in SRFI 99 whereby the names of fields are semantically significant. While both R6RS and SRFI 99 consider field names to be symbols, they do so in distinctly different ways: R6RS provides an inspection procedure to get the names of fields in a record type descriptor, but these field names are for informative purposes only; in SRFI 99, fields are uniquely identified by their symbolic names and it is by name that fields are specified in the procedural layer. By contrast, fields in R6RS are uniquely identified by their position in the record structure as an exact integer index, as demonstrated by the argument to the <code>record-accessor</code> and <code>record-mutator</code> procedures, and by the fact that there is no restriction in R6RS that requires field names to be unique. Moreover, SRFI 99 has a weakness because although the procedural layer promises that shadowing of supertypes’ field names within subtypes will work, it does not work at the syntactic layer, nor when creating a constructor procedure with the procedural layer that uses a custom ordering of fields. This alternative syntactic layer resolves all these issue with SRFI 99-style syntactic record definitions in a similar manner to R6RS, though considerably lighter-weight.</p>
+
+<h2 id="specification">Specification</h2>
+
+<p>This specification follows the original SRFI 9 text in referring to field names as ‘field tags’.</p>
+
+<p><i>Syntax:</i></p>
+<pre><code>(define-record-type <var class="stx">record spec</var>
+  <var class="stx">constructor spec</var>
+  <var class="stx">predicate name</var>
+  <var class="stx">field spec</var> ...)</code></pre>
+<p><code><var class="stx">Record spec</var></code> is an identifier or <code>(<var class="stx">identifier</var> <var class="stx">parent</var>)</code>.</p>
+<p>If <code><var class="stx">record spec</var></code> is an identifier, the <code><var class="stx">constructor spec</var></code> has the form <code>(<var class="stx">constructor name</var> <var class="stx">field tag</var> ...)</code>. If <code><var class="stx">record spec</var></code> has the second form, it has the form <code>(<var class="stx">constructor name</var> <var class="stx">parent instance</var> <var class="stx">field tag</var> ...)</code>.</p>
+<p><code><var class="stx">Field spec</var></code>s and <code><var class="stx">field tag</var></code>s are as in SRFI 9 and R7RS small. There must be as many <code><var class="stx">field spec</var></code>s as <code><var class="stx">field tag</var></code>s within the <code><var class="stx">constructor spec</var></code>, in the same order. The <code><var class="stx">field tag</var></code>s in the <code><var class="stx">field spec</var></code>s must be the same in the sense of <code>bound-identifier=?</code> as the ones in the <code><var class="stx">constructor spec</var></code>, but (unlike in R7RS small) there is no requirement for each of the <code><var class="stx">field tag</var></code>s to be unique, as they are informative only.</p>
+
+<p><code><var class="stx">Constructor name</var></code> and <code><var class="stx">predicate name</var></code> are identifiers.</p>
+
+<p><i>Semantics:</i> <code>Define-record-type</code> binds the identifier named by the <code><var class="stx">record spec</var></code> in a unique but unspecified way that represents a record type, called the record type descriptor. The binding may be either be as a variable or as syntax. The record type is newly created upon each evaluation of a <code>define-record-type</code> expression. If the <code><var class="stx">record spec</var></code> includes a <code><var class="stx">parent</var></code>, it must refer to another existing record type descriptor, which is taken as the descriptor for the record type which is the supertype of the newly-created record type. If there is no <code><var class="stx">parent</var></code>, the newly-created record type has no supertype.</p>
+
+<p>The <code><var class="stx">constructor name</var></code> is defined as a variable bound to a procedure which constructs instances of the new record type. If the new record type has a supertype, the first argument to this procedure must be a direct instance of a record of the supertype (i.e. an instance of that record and not one of its subtypes), called the supertype instance. The field values of that record instance are used to fill the corresponding field values in the new record instance. The supertype instance remains independent from the newly-created instance, so that subsequent mutations to the supertype instance do not affect the corresponding fields of the newly-created subtype instance. The remaining arguments fill the field values for the fields named by the <code><var class="stx">field tag</var></code>s in the <code>define-record-type</code>. If there is no supertype, the arguments of the constructor procedure are simply taken to fill the fields.</p>
+<p>The <code><var class="stx">predicate name</var></code> identifier is bound to a procedure of one argument which returns <code>#t</code> if its argument is an instance of the newly-created record type or of one of its future subtypes, and <code>#f</code> otherwise.</p>
+<p>The <code><var class="stx">field spec</var></code>s name field accessor and mutator procedures which are bound as in SRFI 9 and R7RS small. The procedures are extended from those specifications so as to work on instances of any subtypes of the newly created record type, accessing the values that were in those fields of the supertype instance.</p>
+
+<h2 id="example">Example</h2>
+
+<p>When Alyssa P. Hacker was a computer science student at MIT in the 1990s, she created a program to help her manage her collection of textbooks. After SRFI 9 came out in 1999, the central record type definition looked like this:</p>
+
+<pre class="scheme"><code>(define-record-type Book
+  (make-book title isbn)
+  book?
+  (title book-title)
+  (isbn book-isbn))
+
+;; Alyssa took 6.001, of course ...
+(define sicp-1e
+  (make-book &quot;Structure and Interpretation of Computer Programs&quot;
+             &quot;0262010771&quot;))
+
+;; ... and was later a tutor for it ...
+(define sicp-2e-instructors-manual
+  (make-book &quot;Instructor’s Manual to accompany Structure and Interpretation of Computer Programs (2nd edition)&quot;
+             &quot;0262692201&quot;))
+
+;; She also took some elective classes:
+(define baldi-iel
+  (make-book &quot;An Introduction to the Indo-European Languages&quot;
+             &quot;0809310910&quot;))</code></pre>
+
+<p>She provided this program to her friends to help them manage their own libraries of books. Ben Bitdiddle created an extension to help him manage his collection of Japanese manga and novels, and added a field to link English translations to their Japanese originals:</p>
+
+<pre class="scheme"><code>(define-record-type (Manga Book)
+  (make-manga book original-language-edition)
+  manga?
+  (original-language-edition manga-original-language-edition))
+
+(define tensura
+  (make-book &quot;転生したらスライムだった件&quot;
+             &quot;4063765784&quot;))
+
+(define slime
+  (make-manga (make-book &quot;That Time I Got Reincarnated as a Slime&quot;
+                         &quot;0316414204&quot;)
+              tensura))</code></pre>
+<p>Alyssa only considered 10-digit ISBNs when she created her program in the 1990s, but in 2007 the ISBN space was extended to 13 digits. Some ISBNs can be converted, but not all 13-digit ISBNs have 10-digit equivalents. While other countries were assigned longer ISBNs early on, the first of these ISBNs were only recently assigned to the USA, so Alyssa had to adapt her program to support them. She changes the record type definition:</p>
+
+<pre class="scheme"><code>(define-record-type Book
+  (make-book/isbn10+13 title isbn-10 isbn-13)
+  book?
+  (title book-title)
+  (isbn-10 book-isbn-10)
+  (isbn-13 book-isbn-13))
+
+(define (make-book/isbn-10 title isbn-10)
+  (make-book/isbn10+13 title isbn-10 (isbn-10-&gt;isbn-13 isbn-10)))
+
+;; compatibility procedure
+(define make-book make-book/isbn-10)
+
+(define (make-book/isbn-13 title isbn-13)
+  (make-book/isbn10+13 title
+                       (if (isbn-13-convertible-to-10? isbn-13)
+                           (isbn-13-&gt;isbn-10 isbn-10)
+                           #f)
+                       isbn-13))</code></pre>
+
+<p>Despite the change, Ben’s adapted version continues to work as-is and gets the new ISBN-13 support of the base record type ‘for free’, because the field structure of the Book type is an implementation detail which is hidden from his code which subtypes it.</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>There are two sample implementations available. The first is a completely fresh implementation of record types with inheritance, implemented on top of the record types without inheritance from R7RS small. The second implements the syntax in terms of R6RS’s record system using a trick.</p>
+
+<h3 id="pure-r7rs-small-implementation-with-no-procedural-layer">Pure R7RS small implementation with no procedural layer</h3>
+
+<p>This implementation is not remotely optimized for efficiency. Also, for obvious reasons, it is not possible to subtype a record type defined with <code>(scheme base)</code>’s own <code>define-record-type</code>.</p>
+
+<pre class="scheme"><code>(define-library (srfi xxx)
+  (import (rename (scheme base)
+                  (define-record-type r7rs:define-record-type)))
+  (export define-record-type)
+
+  (begin
+    (r7rs:define-record-type RTD
+      (make-rtd parent n-own-fields)
+      rtd?
+      (parent rtd-parent)
+      (n-own-fields rtd-n-own-fields))
+    (r7rs:define-record-type Record
+      (make-record type field-values)
+      record?
+      (type record-rtd)
+      (field-values record-field-values))
+    (define base-rtd (make-rtd #f 0))
+    (define base-record (make-record base-rtd #()))
+
+    (define (rtd-n-all-fields rtd)
+      (+ (rtd-n-own-fields rtd)
+         (if (rtd-parent rtd)
+             (rtd-n-all-fields (rtd-parent rtd))
+             0)))
+
+    (define-syntax define-record-type
+      (syntax-rules ()
+        ((_ (name parent-expr)
+            (constructor _ field-tag1 ...)
+            predicate
+            (field-tag2 accessor . maybe-mutator) ...)
+         (begin
+           (define parent parent-expr)
+           (define rtd
+             (if (rtd? parent)
+                 (make-rtd parent (length &#39;(field-tag1 ...)))
+                 (error &quot;define-record-type: parent is not a record type&quot; parent)))
+           (define name rtd)
+           (define (predicate obj)
+             (and (record? obj)
+                  (let loop ((type (record-rtd obj)))
+                    (and type
+                         (or (eqv? type rtd)
+                             (loop (rtd-parent type)))))))
+           (define (constructor superinstance field-tag1 ...)
+             (if (and (record? superinstance)
+                      (eqv? (record-rtd superinstance) parent))
+                 (make-record rtd (vector-append
+                                   (record-field-values superinstance)
+                                   (vector field-tag1 ...)))
+                 (error &quot;superinstance not the right type&quot; superinstance rtd)))
+           (define-record-type/accessors+mutators
+             rtd predicate
+             ((field-tag1 field-tag2 accessor . maybe-mutator) ...)
+             ())))
+        ((_ name (constructor field-tag ...) predicate field-spec ...)
+         (begin
+           (define-record-type (name base-rtd)
+             (fake-constructor superinstance field-tag ...)
+             predicate field-spec ...)
+           (define (constructor field-tag ...)
+             (fake-constructor base-record field-tag ...))))))
+
+    (define-syntax define-record-type/accessors+mutators
+      (syntax-rules ()
+        ((_ _ _ () _) (begin))
+        ((_ rtd pred
+            ((field-tag1 field-tag2 accessor) more ...)
+            checked)
+         (bound-identifier=?
+          field-tag1 field-tag2
+          (begin
+            (define field-id (+ (rtd-n-all-fields (rtd-parent rtd))
+                                (length &#39;checked)))
+            (define (accessor inst)
+              (if (pred inst)
+                  (vector-ref (record-field-values inst) field-id)
+                  (error &quot;not an instance of the right type&quot; inst)))
+            (define-record-type/accessors+mutators
+              rtd pred
+              (more ...)
+              (n . checked)))
+          (syntax-error &quot;field tags must be the same in the constructor as in the field specs&quot; &#39;field-tag1 &#39;field-tag2)))
+        ((_ rtd pred
+            ((field-tag1 field-tag2 accessor mutator) more ...)
+            checked)
+         (bound-identifier=?
+          field-tag1 field-tag2
+          (begin
+            (define field-id (+ (rtd-n-all-fields (rtd-parent rtd))
+                                (length &#39;checked)))
+            (define (accessor inst)
+              (if (pred inst)
+                  (vector-ref (record-field-values inst) field-id)
+                  (error &quot;not an instance of the right type&quot; inst)))
+            (define (mutator inst new-val)
+              (if (pred inst)
+                  (vector-set! (record-field-values inst) field-id new-val)
+                  (error &quot;not an instance of the right type&quot; inst)))
+            (define-record-type/accessors+mutators
+              rtd pred
+              (more ...)
+              (n . checked)))
+          (syntax-error &quot;field tags must be the same in the constructor as in the field specs&quot; &#39;field-tag1 &#39;field-tag2)))))
+
+    (define-syntax bound-identifier=?
+      (syntax-rules ()
+        ((bound-identifier=? id v kt kf)
+         (begin
+           (define-syntax m
+             (syntax-rules :::1 ()
+               ((m %kt %kf)
+                (begin
+                  (define-syntax id
+                    (syntax-rules :::2 ()
+                      ((id %%kt %%kf) %%kf)))
+                  (define-syntax ok
+                    (syntax-rules ()
+                      ((ok %%kt %%kf) %%kt)))
+                  (define-syntax test
+                    (syntax-rules :::2 ()
+                      ((test v %%kt %%kf) (id %%kt %%kf))
+                         ((test _ %%kt %%kf) (id %%kt %%kf))))
+                  (test ok %kt %kf)))))
+           (m kt kf)))))))</code></pre>
+
+<h3 id="implementation-in-terms-of-the-r6rs-record-system">Implementation in terms of the R6RS record system</h3>
+
+<pre class="scheme"><code>(library (srfi :xxx)
+  (export define-record-type)
+  (import (rename (rnrs)
+                  (define-record-type r6rs:define-record-type)))
+
+  (define *cheat-key* (list &#39;*cheat-key*))
+  (define-syntax define-record-type
+    (lambda (stx)
+      (define (convert-field-spec fstx)
+        (syntax-case fstx ()
+          ((tag accessor)
+           #&#39;(immutable tag accessor))
+          ((tag accessor mutator)
+           #&#39;(mutable tag accessor mutator))))
+      (syntax-case stx ()
+        ((_ name (constructor field-tag1 ...) predicate
+            (field-tag2 . accessor-info) ...)
+         (and (identifier? #&#39;name)
+              (for-all bound-identifier=? #&#39;(field-tag1 ...) #&#39;(field-tag2 ...)))
+         (with-syntax (((field-spec ...)
+                        (map convert-field-spec
+                             #&#39;((field-tag2 . accessor-info) ...))))
+           #&#39;(r6rs:define-record-type
+              (name constructor predicate)
+              (fields field-spec ...))))
+        ((_ (name parent-name) (constructor _ field-tag1 ...) predicate
+            (field-tag2 . accessor-info) ...)
+         (with-syntax (((field-spec ...)
+                        (map convert-field-spec
+                             #&#39;((field-tag2 . accessor-info) ...)))
+                       ((constructor-arg ...)
+                         (generate-temporaries #&#39;(field-tag1 ...))))
+           #&#39;(r6rs:define-record-type
+              (name constructor predicate)
+              (fields field-spec ...)
+              (parent parent-name)
+              (protocol
+               (lambda (n)
+                 (letrec
+                     ((cheat
+                       (case-lambda
+                         ((superinstance constructor-arg ...)
+                          (assert (eqv? (record-rtd superinstance)
+                                        (record-type-descriptor parent-name)))
+                          (cheat *cheat-key* superinstance constructor-arg ...))
+                         ((key superinstance constructor-arg ...)
+                          (assert (eq? key *cheat-key*))
+                          (let* ((parent-rtd (record-type-descriptor parent-name))
+                                 (n-fields (vector-length (record-type-field-names parent-rtd))))
+                            (let loop ((idx n-fields)
+                                       (args &#39;()))
+                              (if (= idx 0)
+                                  (if (record-type-parent parent-rtd)
+                                      ((apply n key superinstance args)
+                                       constructor-arg ...)
+                                      ((apply n args) constructor-arg ...))
+                                  (loop (- idx 1)
+                                        (cons ((record-accessor parent-rtd (- idx 1)) superinstance)
+                                              args)))))))))
+                   cheat))))))))))</code></pre>
+
+<h2 id="acknowledgements">Acknowledgements</h2>
+
+<p>Marc Nieper-Wißkirchen’s previous work on record-related libraries inspired this SRFI (but there is no reason to suppose that he approves of its contents, or otherwise).</p>
+
+<h2 id="copyright">Copyright</h2>
+<p>&copy; Daphne Preston-Kendal, 2024.</p>
+
+<p>
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:</p>
+
+<p>
+  The above copyright notice and this permission notice (including the
+  next paragraph) shall be included in all copies or substantial
+  portions of the Software.</p>
+<p>
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.</p>
+
+  <hr>
+  <address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address></body></html>
