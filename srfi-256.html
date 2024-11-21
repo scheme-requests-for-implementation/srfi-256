@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 -->
   <head>
     <meta charset="utf-8">
-    <title>SRFI ###: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</title>
+    <title>SRFI 256: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</title>
     <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
     <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
 <style>
@@ -24,7 +24,7 @@ var.stx {
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1"></head>
   <body>
-    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>###: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</h1>
+    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>256: Minimal extension to SRFI 9/R7RS small record type definitions for inheritance</h1>
 
 <p>by Daphne Preston-Kendal</p>
 
@@ -145,7 +145,7 @@ The editor will add this section.</p>
 
 <p>This implementation is not remotely optimized for efficiency. Also, for obvious reasons, it is not possible to subtype a record type defined with <code>(scheme base)</code>’s own <code>define-record-type</code>.</p>
 
-<pre class="scheme"><code>(define-library (srfi xxx)
+<pre class="scheme"><code>(define-library (srfi 256)
   (import (rename (scheme base)
                   (define-record-type r7rs:define-record-type)))
   (export define-record-type)
@@ -273,7 +273,7 @@ The editor will add this section.</p>
 
 <h3 id="implementation-in-terms-of-the-r6rs-record-system">Implementation in terms of the R6RS record system</h3>
 
-<pre class="scheme"><code>(library (srfi :xxx)
+<pre class="scheme"><code>(library (srfi :256)
   (export define-record-type)
   (import (rename (rnrs)
                   (define-record-type r6rs:define-record-type)))
