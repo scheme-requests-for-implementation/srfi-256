@@ -30,11 +30,21 @@ var.stx {
 
 <h2 id="status">Status</h2>
 
-    <p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+256+at+srfi+dotschemers+dot+org">srfi-256@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-256/">archive</a>.</p>
+    <p>This SRFI is currently in <em>withdrawn</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+256+at+srfi+dotschemers+dot+org">srfi-256@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-256/">archive</a>.</p>
     <ul>
       <li>Received: 2024-11-20</li>
-      <li>60-day deadline: 2025-01-20</li>
-      <li>Draft #1 published: 2024-11-21</li></ul>
+      <li>Draft #1 published: 2024-11-21</li>
+      <li>Withdrawn: 2025-02-08
+        <p>author's summary of reasons for withdrawal:</p>
+        <blockquote>While this proposal achieves its semantic goals,
+          no known Scheme implementation, including otherwise
+          highly-optimizing ones, is yet able to optimize record
+          construction in the style proposed here for subtype
+          instances in all cases.  I am continuing to work on the
+          problem of finding a record type design that will satisfy
+          Schemers’ desires for an efficient basis for a record system
+          which can be extended to support any of the features someone
+          might want.</blockquote></li></ul>
 
 <h2 id="abstract">Abstract</h2>
 
